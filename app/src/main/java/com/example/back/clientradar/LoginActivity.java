@@ -36,6 +36,8 @@ import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.example.back.clientradar.MainActivity.sendData;
+
 public class LoginActivity extends AppCompatActivity {
 
     private LocationManager locationManager = null; // 위치 정보 프로바이더
@@ -52,12 +54,10 @@ public class LoginActivity extends AppCompatActivity {
     private boolean isGPSEnabled = false;
     private boolean isNetworkEnabled = false;
 
-    private String loginAddress = "http://dev-dreamon.cloud.or.kr/android.php";
 
     private HashMap<String, String> map;
     private int flag = 0;
 
-    private UserLogin userLogin;
     private SendGPS sendGPS;
     private String id = "";
 
@@ -69,7 +69,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private int serviceState = 0;
 
-    private HttpURLConnection connection;
+
 
     private GPSListener gps;
 
@@ -79,11 +79,6 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        Intent intent = getIntent();
-
-        id = intent.getStringExtra("id");
-        String password = intent.getStringExtra("password");
-
         geolat = (TextView) findViewById(R.id.geolat);
         geolng = (TextView) findViewById(R.id.geolng);
         btnStart = (Button) findViewById(R.id.btnStart);
@@ -91,13 +86,6 @@ public class LoginActivity extends AppCompatActivity {
         startPoint = (EditText) findViewById(R.id.startPoint);
         stopPoint = (EditText) findViewById(R.id.stopPoint);
         status = (TextView) findViewById(R.id.status);
-
-        map = new HashMap<>();
-        map.put("id", id);
-        map.put("password", password);
-        map.put("flag", flag + "");
-        userLogin = new UserLogin(map, flag);
-        userLogin.execute();
 
         btnStart.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -178,7 +166,7 @@ public class LoginActivity extends AppCompatActivity {
         @Override
         protected Void doInBackground(Void... params) {
             try {
-                sendData(map);
+                MainActivity.sendData(map);
 
                 Log.d("SERVICE", "운행시작");
                 do {
@@ -188,10 +176,10 @@ public class LoginActivity extends AppCompatActivity {
                     map.put("lat", latitude + "");
                     map.put("lng", longitude + "");
                     map.put("flag", 2 + "");
-                    sendData(map);
+                    MainActivity.sendData(map);
 
                     Thread.sleep(2000);
-                    if(resState.equals("0")) {
+                    if (resState.equals("0")) {
                         break;
                     }
 
@@ -204,7 +192,7 @@ public class LoginActivity extends AppCompatActivity {
                 map.put("no", resNo);
                 map.put("flag", 3 + "");
                 map.put("state", resState);
-                sendData(map);
+                MainActivity.sendData(map);
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -216,109 +204,6 @@ public class LoginActivity extends AppCompatActivity {
         protected void onCancelled() {
 
         }
-    }
-
-    public class UserLogin extends AsyncTask<Void, Void, Void> {
-        private HashMap<String, String> postData;
-
-        public UserLogin(HashMap<String, String> map, int flag) {
-            this.postData = map;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-
-        }
-
-        @Override
-        protected Void doInBackground(Void... params) {
-
-            try {
-                Log.d("FLAG", flag + "");
-                sendData(postData);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-            if(id.equals(resId)) {
-                Toast.makeText(LoginActivity.this, "로그인 완료", Toast.LENGTH_SHORT).show();
-            } else {
-
-            }
-
-        }
-    }
-
-    private void sendData(HashMap<String, String> postData) {
-        try {
-            URL url = new URL(loginAddress);
-            //url 커넥션 생성
-            connection = (HttpURLConnection) url.openConnection();
-            //요청 방식
-            connection.setRequestMethod("POST");
-            // 요청 응답 타임아웃
-            connection.setConnectTimeout(3000);
-            connection.setReadTimeout(3000);
-            connection.setDoOutput(true);
-            //Log.d("data", data);
-
-            String postDataString = getPostString(postData);
-            Log.d("POSTDATA", postDataString);
-
-            OutputStreamWriter osw = new OutputStreamWriter(connection.getOutputStream());
-            osw.write(postDataString);
-            osw.flush();
-
-            BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-            StringBuilder sb = new StringBuilder();
-
-            String json;
-
-            // server로 부터 메시지 받아오는 곳
-
-            while ((json = br.readLine()) != null) {
-                sb.append(json);
-                break;
-            }
-            Log.d("response", sb.toString().trim());
-            jsonParsing(sb.toString().trim());
-            br.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-
-    // =key&value 형태로 Map을 변경해주는 메소드
-    private String getPostString(HashMap<String, String> map) {
-        StringBuilder result = new StringBuilder();
-        boolean first = true; // 첫 번째 매개변수 여부
-
-        for (Map.Entry<String, String> entry : map.entrySet()) {
-            if (first)
-                first = false;
-            else // 첫 번째 매개변수가 아닌 경우엔 앞에 &를 붙임
-                result.append("&");
-
-            try { // UTF-8로 주소에 키와 값을 붙임
-                result.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
-                result.append("=");
-                result.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
-            } catch (UnsupportedEncodingException ue) {
-                ue.printStackTrace();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        return result.toString();
     }
 
     private void getLocationService() {
@@ -416,39 +301,7 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    private void jsonParsing(String json) {
-        try {
-            JSONArray jsonArray = new JSONArray(json);
 
-            // JSON 오브젝트 한개만 받아옴
-            JSONObject jsonObject = jsonArray.getJSONObject(0);
-
-
-            if (jsonObject.has("id")) {
-                resId = jsonObject.getString("id");
-                Log.d("ResID", resId);
-            }
-
-            if (jsonObject.has("no")) {
-                resNo = jsonObject.getString("no");
-                Log.d("ResNO", resNo);
-            }
-
-            if (jsonObject.has("state")) {
-                resState = jsonObject.getString("state");
-                Log.d("ResSTATE", resState);
-            }
-
-            if (jsonObject.has("distance")) {
-                resDistance = jsonObject.getString("distance");
-                Log.d("ResDistance", resDistance);
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-    }
 
 }
 
