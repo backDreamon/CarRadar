@@ -7,8 +7,6 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.media.MediaExtractor;
-import android.nfc.Tag;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.provider.Settings;
@@ -23,20 +21,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLEncoder;
 import java.util.HashMap;
-import java.util.Map;
-
-import static com.example.back.clientradar.MainActivity.sendData;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -58,17 +43,7 @@ public class LoginActivity extends AppCompatActivity {
     private HashMap<String, String> map;
     private int flag = 0;
 
-    private SendGPS sendGPS;
     private String id = "";
-
-    // 서버로부터 response하는 값
-    private String resId = "";
-    private String resState = "0";
-    private String resNo = "";
-    private String resDistance = "";
-
-    private int serviceState = 0;
-
 
 
     private GPSListener gps;
@@ -82,7 +57,6 @@ public class LoginActivity extends AppCompatActivity {
         geolat = (TextView) findViewById(R.id.geolat);
         geolng = (TextView) findViewById(R.id.geolng);
         btnStart = (Button) findViewById(R.id.btnStart);
-//        btnStop = (Button) findViewById(R.id.btnStop);
         startPoint = (EditText) findViewById(R.id.startPoint);
         stopPoint = (EditText) findViewById(R.id.stopPoint);
         status = (TextView) findViewById(R.id.status);
@@ -90,7 +64,7 @@ public class LoginActivity extends AppCompatActivity {
         btnStart.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (resState.equals("0")) {
+                if (Common.resState.equals("0")) {
                     getLocationService();
 
                     new SendGPS().execute();
@@ -104,7 +78,7 @@ public class LoginActivity extends AppCompatActivity {
                         return;
                     }
                     locationManager.removeUpdates(gps);
-                    resState = "0";
+                    Common.resState = "0";
                     btnStart.setText("운행시작");
 
                 }
@@ -127,11 +101,11 @@ public class LoginActivity extends AppCompatActivity {
             super.onPreExecute();
             map = new HashMap<String, String>();
 
-            if (resState.equals("0")) {
-                resState = "1";
+            if (Common.resState.equals("0")) {
+                Common.resState = "1";
                 flag = 1;
-                map.put("id", resId);
-                map.put("state", resState);
+                map.put("id", Common.resId);
+                map.put("state", Common.resState);
                 map.put("flag", flag + "");
                 map.put("start_point", startPoint.getText().toString());
                 map.put("stop_point", stopPoint.getText().toString());
@@ -148,13 +122,13 @@ public class LoginActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
-            if (resState.equals("0")) {
+            if (Common.resState.equals("0")) {
                 Toast.makeText(LoginActivity.this, "운행정지", Toast.LENGTH_SHORT).show();
                 Log.d("SERVICE", "운행정지");
             }
             startPoint.setEnabled(true);
             stopPoint.setEnabled(true);
-            status.setText("총 이동 거리 : " + resDistance + "Km");
+            status.setText("총 이동 거리 : " + Common.resDistance + "Km");
         }
 
         @Override
@@ -166,33 +140,33 @@ public class LoginActivity extends AppCompatActivity {
         @Override
         protected Void doInBackground(Void... params) {
             try {
-                MainActivity.sendData(map);
+                Common.sendData(map);
 
                 Log.d("SERVICE", "운행시작");
                 do {
                     map = new HashMap<>();
-                    map.put("id", id);
-                    map.put("no", resNo);
+                    map.put("id", Common.resId);
+                    map.put("no", Common.resNo);
                     map.put("lat", latitude + "");
                     map.put("lng", longitude + "");
                     map.put("flag", 2 + "");
-                    MainActivity.sendData(map);
+                    Common.sendData(map);
 
                     Thread.sleep(2000);
-                    if (resState.equals("0")) {
+                    if (Common.resState.equals("0")) {
                         break;
                     }
 
-                } while (resState.equals("1"));
+                } while (Common.resState.equals("1"));
 
                 Log.d("SERVICE", "운행종료중");
 
                 map = new HashMap<>();
-                map.put("id", id);
-                map.put("no", resNo);
+                map.put("id", Common.resId);
+                map.put("no", Common.resNo);
                 map.put("flag", 3 + "");
-                map.put("state", resState);
-                MainActivity.sendData(map);
+                map.put("state", Common.resState);
+                Common.sendData(map);
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -247,19 +221,19 @@ public class LoginActivity extends AppCompatActivity {
 
     protected void alertbox(String title, String mymessage) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage("Your Device's GPS is Disable")
+        builder.setMessage("위치 정보 비활성화")
                 .setCancelable(false)
-                .setTitle("** Gps Status **")
-                .setPositiveButton("Gps On",
+                .setTitle("위치 정보")
+                .setPositiveButton("활성화",
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
                                 Intent myIntent = new Intent(
-                                        Settings.ACTION_SECURITY_SETTINGS);
+                                        Settings.ACTION_LOCATION_SOURCE_SETTINGS);
                                 startActivity(myIntent);
                                 dialog.cancel();
                             }
                         })
-                .setNegativeButton("Cancel",
+                .setNegativeButton("취소",
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
                                 dialog.cancel();
