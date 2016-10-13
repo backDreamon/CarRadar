@@ -60,7 +60,7 @@ public class Common {
                 sb.append(json);
                 break;
             }
-            Log.d("response", sb.toString().trim());
+            //Log.d("response", sb.toString().trim());
             jsonParsing(sb.toString().trim());
             br.close();
         } catch (Exception e) {

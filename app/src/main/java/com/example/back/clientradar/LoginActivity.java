@@ -26,19 +26,13 @@ import java.util.HashMap;
 public class LoginActivity extends AppCompatActivity {
 
     private LocationManager locationManager = null; // 위치 정보 프로바이더
-    private TextView geolat;
-    private TextView geolng;
+    public static TextView geolat;
+    public static TextView geolng;
     private TextView status;
     private Button btnStart;
     //    private Button btnStop;
     private EditText startPoint;
     private EditText stopPoint;
-    double latitude;
-    double longitude;
-
-    private boolean isGPSEnabled = false;
-    private boolean isNetworkEnabled = false;
-
 
     private HashMap<String, String> map;
     private int flag = 0;
@@ -46,13 +40,14 @@ public class LoginActivity extends AppCompatActivity {
     private String id = "";
 
 
-    private GPSListener gps;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
+
 
         geolat = (TextView) findViewById(R.id.geolat);
         geolng = (TextView) findViewById(R.id.geolng);
@@ -64,21 +59,16 @@ public class LoginActivity extends AppCompatActivity {
         btnStart.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Intent serviceIntent = new Intent(getApplicationContext(), LocationService.class);
+
                 if (Common.resState.equals("0")) {
-                    getLocationService();
-
-                    new SendGPS().execute();
-
+                    startService(serviceIntent);
+                    SendGPS sendGPS = new SendGPS();
+                    sendGPS.execute();
                     btnStart.setText("운행종료");
                 } else {
-                    if (Build.VERSION.SDK_INT >= 23 &&
-                            ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                            ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-                        return;
-                    }
-                    locationManager.removeUpdates(gps);
                     Common.resState = "0";
+                    stopService(serviceIntent);
                     btnStart.setText("운행시작");
 
                 }
@@ -124,7 +114,7 @@ public class LoginActivity extends AppCompatActivity {
             super.onPostExecute(aVoid);
             if (Common.resState.equals("0")) {
                 Toast.makeText(LoginActivity.this, "운행정지", Toast.LENGTH_SHORT).show();
-                Log.d("SERVICE", "운행정지");
+                Log.e("SERVICE", "운행정지");
             }
             startPoint.setEnabled(true);
             stopPoint.setEnabled(true);
@@ -142,13 +132,13 @@ public class LoginActivity extends AppCompatActivity {
             try {
                 Common.sendData(map);
 
-                Log.d("SERVICE", "운행시작");
+                Log.e("SERVICE", "운행시작");
                 do {
                     map = new HashMap<>();
                     map.put("id", Common.resId);
                     map.put("no", Common.resNo);
-                    map.put("lat", latitude + "");
-                    map.put("lng", longitude + "");
+                    map.put("lat", LocationService.latitude + "");
+                    map.put("lng", LocationService.longitude + "");
                     map.put("flag", 2 + "");
                     Common.sendData(map);
 
@@ -159,7 +149,7 @@ public class LoginActivity extends AppCompatActivity {
 
                 } while (Common.resState.equals("1"));
 
-                Log.d("SERVICE", "운행종료중");
+                Log.e("SERVICE", "운행종료중");
 
                 map = new HashMap<>();
                 map.put("id", Common.resId);
@@ -180,7 +170,7 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    private void getLocationService() {
+    /*private void getLocationService() {
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         // GPS 프로바이더 사용가능여부
         isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
@@ -204,9 +194,9 @@ public class LoginActivity extends AppCompatActivity {
                 return;
             }
 
-            /*
+            *//*
                 GPS 프로바이더는 실내에서 작동하지 않기때문에 NETWORK 프로바이더로 전환한다
-             */
+             *//*
             if (locationManager.getAllProviders().contains(LocationManager.GPS_PROVIDER))
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 10, gps); //GPS 프로바이더 로 위치값 받아오기
             else if (locationManager.getAllProviders().contains(LocationManager.NETWORK_PROVIDER))
@@ -274,7 +264,7 @@ public class LoginActivity extends AppCompatActivity {
 
         }
     }
-
+*/
 
 
 }
