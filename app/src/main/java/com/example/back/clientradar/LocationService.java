@@ -1,8 +1,11 @@
 package com.example.back.clientradar;
 
 import android.Manifest;
+import android.app.AlertDialog;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -11,6 +14,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.provider.Settings;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.widget.Toast;
@@ -22,9 +27,9 @@ import android.widget.Toast;
 public class LocationService extends Service {
 
     // 위치 불러오는 시간
-    private static final int LOCATION_INTERVAL = 2000;
+    private static final int LOCATION_INTERVAL = 5000;
     // 위치 불러오는 거리
-    private static final float LOCATION_DISTANCE = 10f;
+    private static final float LOCATION_DISTANCE = 20f;
 
     private LocationManager locationManager;
     public PowerManager.WakeLock wakeLock;
@@ -37,6 +42,7 @@ public class LocationService extends Service {
     private boolean isNetworkEnabled;
     private boolean isGPSEnabled;
     private Location location;
+
 
     public LocationService() {
 
@@ -66,11 +72,17 @@ public class LocationService extends Service {
     @Override
     public void onDestroy() {
 
-
         stopSelf();
         wakeLock.release();
         super.onDestroy();
 
+        if (Build.VERSION.SDK_INT >= 23
+                && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+
+        locationManager.removeUpdates(gps);
         Log.e("SERVICE", "DESTROYED");
     }
 
@@ -85,12 +97,10 @@ public class LocationService extends Service {
     }
 
     private void getLocation() {
-        int permissionCheckFINE = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
-        int permissionCheckCOARSE = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION);
 
         if (Build.VERSION.SDK_INT >= 23
-                && permissionCheckCOARSE != PackageManager.PERMISSION_GRANTED
-                && permissionCheckFINE != PackageManager.PERMISSION_GRANTED) {
+                && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
 
@@ -106,7 +116,22 @@ public class LocationService extends Service {
             Log.e("STATUS NETWORK", String.valueOf(isNetworkEnabled));
 
             if (!isNetworkEnabled && !isGPSEnabled) {
+                /*if (!isGPSEnabled){
+                    Log.d("GPS", "NONONONONONO");
 
+                    Intent setIntent = new Intent(this, AlertDialogGPS.class);
+                    setIntent.addFlags(setIntent.FLAG_ACTIVITY_NEW_TASK);
+
+                    PendingIntent pi = PendingIntent.getActivity(getApplicationContext(), 0, setIntent, PendingIntent.FLAG_ONE_SHOT);
+
+                    try {
+                        pi.send();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                    return;
+                }*/
                 return;
             } else {
                 if (isNetworkEnabled) {
@@ -117,9 +142,7 @@ public class LocationService extends Service {
                     if (locationManager != null) {
                         location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
                     }
-                }
-
-                if (isGPSEnabled) {
+                } else if (isGPSEnabled) {
                     locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
                             LOCATION_INTERVAL,
                             LOCATION_DISTANCE,

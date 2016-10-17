@@ -57,6 +57,15 @@
             android:text="운행종료"
             android:id="@+id/btnStop"/>-->
 
+        <Chronometer
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/chronometer"
+            android:gravity="center"
+            android:layout_gravity="center"
+
+            />
+
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -64,6 +73,12 @@
             android:textSize="30dp"
             android:textColor="#AA0000"
             android:id="@+id/status" />
+
+
+
+
+
+
 
 
     </LinearLayout>

@@ -9,6 +9,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
@@ -17,6 +18,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Chronometer;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -33,6 +35,7 @@ public class LoginActivity extends AppCompatActivity {
     //    private Button btnStop;
     private EditText startPoint;
     private EditText stopPoint;
+    private Chronometer drivingTime;
 
     private HashMap<String, String> map;
     private int flag = 0;
@@ -40,14 +43,10 @@ public class LoginActivity extends AppCompatActivity {
     private String id = "";
 
 
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-
-
 
         geolat = (TextView) findViewById(R.id.geolat);
         geolng = (TextView) findViewById(R.id.geolng);
@@ -55,6 +54,7 @@ public class LoginActivity extends AppCompatActivity {
         startPoint = (EditText) findViewById(R.id.startPoint);
         stopPoint = (EditText) findViewById(R.id.stopPoint);
         status = (TextView) findViewById(R.id.status);
+        drivingTime = (Chronometer) findViewById(R.id.chronometer);
 
         btnStart.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -62,13 +62,16 @@ public class LoginActivity extends AppCompatActivity {
                 Intent serviceIntent = new Intent(getApplicationContext(), LocationService.class);
 
                 if (Common.resState.equals("0")) {
+                    drivingTime.setBase(SystemClock.elapsedRealtime());
                     startService(serviceIntent);
                     SendGPS sendGPS = new SendGPS();
                     sendGPS.execute();
+                    drivingTime.start();
                     btnStart.setText("운행종료");
                 } else {
                     Common.resState = "0";
                     stopService(serviceIntent);
+                    drivingTime.stop();
                     btnStart.setText("운행시작");
 
                 }
@@ -142,7 +145,8 @@ public class LoginActivity extends AppCompatActivity {
                     map.put("flag", 2 + "");
                     Common.sendData(map);
 
-                    Thread.sleep(2000);
+                    Thread.sleep(5000);
+
                     if (Common.resState.equals("0")) {
                         break;
                     }
@@ -169,104 +173,6 @@ public class LoginActivity extends AppCompatActivity {
 
         }
     }
-
-    /*private void getLocationService() {
-        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        // GPS 프로바이더 사용가능여부
-        isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
-        // 네트워크 프로바이더 사용가능여부
-        isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-
-        Log.d("Main", "isGPSEnabled=" + isGPSEnabled);
-        Log.d("Main", "isNetworkEnabled=" + isNetworkEnabled);
-
-
-        if (isGPSEnabled || isNetworkEnabled) {
-
-
-            gps = new GPSListener();
-
-            //퍼미션 체크
-            if (Build.VERSION.SDK_INT >= 23 &&
-                    ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                    ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-                return;
-            }
-
-            *//*
-                GPS 프로바이더는 실내에서 작동하지 않기때문에 NETWORK 프로바이더로 전환한다
-             *//*
-            if (locationManager.getAllProviders().contains(LocationManager.GPS_PROVIDER))
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 10, gps); //GPS 프로바이더 로 위치값 받아오기
-            else if (locationManager.getAllProviders().contains(LocationManager.NETWORK_PROVIDER))
-                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 2000, 10, gps); //NETWORK 프로바이더로 위치값 받아오기
-
-        } else {
-            alertbox("GPS", "GPS를 켜주세요!");
-        }
-
-
-    }
-
-    protected void alertbox(String title, String mymessage) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage("위치 정보 비활성화")
-                .setCancelable(false)
-                .setTitle("위치 정보")
-                .setPositiveButton("활성화",
-                        new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                Intent myIntent = new Intent(
-                                        Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                                startActivity(myIntent);
-                                dialog.cancel();
-                            }
-                        })
-                .setNegativeButton("취소",
-                        new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                dialog.cancel();
-                            }
-                        });
-        AlertDialog alert = builder.create();
-        alert.show();
-    }
-
-    private class GPSListener implements LocationListener {
-        @Override
-        public void onLocationChanged(Location location) {
-            latitude = location.getLatitude();
-            longitude = location.getLongitude();
-
-            geolat.setText(latitude + "");
-            geolng.setText(longitude + "");
-
-            Log.d("lat", geolat.getText().toString());
-            Log.d("lng", geolng.getText().toString());
-
-
-        }
-
-        @Override
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-            Log.d("osc", provider);
-            Log.d("osc", status + "");
-        }
-
-        @Override
-        public void onProviderEnabled(String provider) {
-
-        }
-
-        @Override
-        public void onProviderDisabled(String provider) {
-
-        }
-    }
-*/
-
-
 }
 
 
