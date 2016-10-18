@@ -1,11 +1,10 @@
 <resources>
-    <string name="app_name">Dr.CAR Radar</string>
+    <string name="app_name">Dr.CAR Radar Spider</string>
     <string name="hind_id">아이디를 입력해주세요</string>
     <string name="hind_pwd">비밀번호를 입력해주세요</string>
     <string name="user_log_in">로그인</string>
     <string name="user_register">회원가입</string>
     <string name="back_act">뒤로가기</string>
     <string name="title_activity_login">Sign in</string>
-
 
 </resources>

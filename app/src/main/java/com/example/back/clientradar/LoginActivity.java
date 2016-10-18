@@ -31,7 +31,7 @@ public class LoginActivity extends AppCompatActivity {
     public static TextView geolat;
     public static TextView geolng;
     private TextView status;
-    private Button btnStart;
+    public static Button btnStart;
     //    private Button btnStop;
     private EditText startPoint;
     private EditText stopPoint;

@@ -81,8 +81,11 @@ public class LocationService extends Service {
                 && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
+        Common.resState = "0"; // 조욜
 
         locationManager.removeUpdates(gps);
+
+
         Log.e("SERVICE", "DESTROYED");
     }
 
@@ -132,6 +135,7 @@ public class LocationService extends Service {
 
                     return;
                 }*/
+                onDestroy();
                 return;
             } else {
                 if (isNetworkEnabled) {
